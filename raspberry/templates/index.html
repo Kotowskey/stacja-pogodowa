@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%E2%98%80%EF%B8%8F</text></svg>" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="logo">☁︎</span>
+            <h1>{{ title }}</h1>
+        </div>
+        <div class="status">
+            <span id="conn-dot" class="dot dot--off" title="Status WebSocket"></span>
+            <span id="conn-text">łączenie...</span>
+        </div>
+    </header>
+
+    <main>
+        <section class="cards" id="cards"></section>
+
+        <section class="charts">
+            <div class="chart-card">
+                <header class="chart-header">
+                    <h2>Historia pomiarów</h2>
+                    <div class="controls">
+                        <label for="node-select">Węzeł:</label>
+                        <select id="node-select"></select>
+                        <label for="range-select">Zakres:</label>
+                        <select id="range-select">
+                            <option value="50">ostatnie 50</option>
+                            <option value="100" selected>ostatnie 100</option>
+                            <option value="500">ostatnie 500</option>
+                        </select>
+                    </div>
+                </header>
+                <div class="chart-grid">
+                    <div class="chart-wrap"><canvas id="chart-temp"></canvas></div>
+                    <div class="chart-wrap"><canvas id="chart-pres"></canvas></div>
+                    <div class="chart-wrap"><canvas id="chart-hum"></canvas></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <small>Stacja pogodowa IoT &middot; Raspberry Pi Gateway &middot; MQTT (Mosquitto)</small>
+    </footer>
+
+    <script>
+        window.__INITIAL_NODES__ = [
+            {% for n in nodes %}{ id: "{{ n.id }}", name: "{{ n.name }}" }{% if not loop.last %},{% endif %}{% endfor %}
+        ];
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>

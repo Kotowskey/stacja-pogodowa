@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.Python
+
+# Baza danych / dane runtime
+data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Edytory / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logi
+*.log
+mosquitto/log/
+mosquitto/data/

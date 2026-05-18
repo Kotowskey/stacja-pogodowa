@@ -1,0 +1,32 @@
+# Konfiguracja bramki Raspberry Pi - stacja pogodowa
+# Plik wczytywany przez raspberry/config.py
+
+mqtt:
+  host: "localhost"
+  port: 1883
+  username: ""           # puste = bez uwierzytelniania
+  password: ""
+  client_id: "rpi-gateway"
+  # Subskrybujemy pomiary ze wszystkich węzłów: weather/<node_id>/data
+  topic_subscribe: "weather/+/data"
+  qos: 1
+  keepalive: 60
+
+database:
+  path: "data/weather.db"
+  # Limit rekordów zwracanych przez /api/history (najnowsze N)
+  history_limit: 500
+
+web:
+  host: "0.0.0.0"        # 0.0.0.0 = dostępny w sieci LAN ("widoczność na zewnątrz")
+  port: 8000
+  title: "Stacja Pogodowa - IoT"
+
+# Lista oczekiwanych węzłów (do UI). Węzły spoza listy też są przyjmowane.
+nodes:
+  - id: "esp32-01"
+    name: "Salon"
+  - id: "esp32-02"
+    name: "Sypialnia"
+  - id: "esp32-03"
+    name: "Balkon"
