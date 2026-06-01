@@ -30,8 +30,8 @@ class NodeProfile:
 
     node_id: str
     base_temp: float
-    base_pressure: float
-    base_humidity: float
+    base_distance: float
+    base_lux: float
     phase: float  # przesunięcie sinusoidy temperatury
 
 
@@ -43,8 +43,8 @@ def make_default_nodes(ids: List[str]) -> List[NodeProfile]:
             NodeProfile(
                 node_id=node_id,
                 base_temp=18.0 + rng.uniform(-2.0, 6.0),
-                base_pressure=1013.0 + rng.uniform(-5.0, 5.0),
-                base_humidity=50.0 + rng.uniform(-15.0, 20.0),
+                base_distance=100.0 + rng.uniform(-40.0, 80.0),
+                base_lux=400.0 + rng.uniform(-150.0, 300.0),
                 phase=i * math.pi / 4,
             )
         )
@@ -58,16 +58,17 @@ def sample(profile: NodeProfile, t: float) -> dict:
     """
     daily = math.sin(2 * math.pi * (t / 600.0) + profile.phase)
     temperature = profile.base_temp + 3.0 * daily + random.uniform(-0.2, 0.2)
-    pressure = profile.base_pressure + 1.5 * math.sin(t / 700.0 + profile.phase) + random.uniform(-0.3, 0.3)
-    humidity = profile.base_humidity - 8.0 * daily + random.uniform(-1.5, 1.5)
-    humidity = max(5.0, min(95.0, humidity))
+    distance = profile.base_distance + 20.0 * math.sin(t / 700.0 + profile.phase) + random.uniform(-1.0, 1.0)
+    distance = max(2.0, distance)
+    lux = profile.base_lux + 250.0 * daily + random.uniform(-15.0, 15.0)
+    lux = max(0.0, lux)
 
     return {
         "node_id": profile.node_id,
         "timestamp": datetime.now(tz=timezone.utc).isoformat(),
         "temperature": round(temperature, 2),
-        "pressure": round(pressure, 2),
-        "humidity": round(humidity, 1),
+        "distance": round(distance, 2),
+        "lux": round(lux, 1),
     }
 
 
@@ -125,7 +126,7 @@ def main() -> None:
                 client.publish(topic, json.dumps(payload), qos=args.qos)
                 print(
                     f"  -> {topic}  T={payload['temperature']:.2f}°C "
-                    f"p={payload['pressure']:.2f}hPa  RH={payload['humidity']:.1f}%"
+                    f"d={payload['distance']:.2f}cm  L={payload['lux']:.1f}lx"
                 )
             time.sleep(args.interval)
     finally:

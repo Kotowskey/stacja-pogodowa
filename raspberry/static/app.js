@@ -7,7 +7,7 @@
         nodes: new Map(),        // node_id -> { id, name, lastMeasurement, lastSeen }
         selectedNode: null,
         rangeLimit: 100,
-        charts: { temp: null, pres: null, hum: null },
+        charts: { temp: null, dist: null, lux: null },
     };
 
     // -------------------------------------------------------------------- helpers
@@ -65,13 +65,13 @@
                         <div class="metric__label">Temperatura</div>
                         <div class="metric__value">${fmt(m?.temperature)}<span class="metric__unit"> °C</span></div>
                     </div>
-                    <div class="metric metric--pres">
-                        <div class="metric__label">Ciśnienie</div>
-                        <div class="metric__value">${fmt(m?.pressure)}<span class="metric__unit"> hPa</span></div>
+                    <div class="metric metric--dist">
+                        <div class="metric__label">Odległość</div>
+                        <div class="metric__value">${fmt(m?.distance)}<span class="metric__unit"> cm</span></div>
                     </div>
-                    <div class="metric metric--hum">
-                        <div class="metric__label">Wilgotność</div>
-                        <div class="metric__value">${fmt(m?.humidity)}<span class="metric__unit"> %</span></div>
+                    <div class="metric metric--lux">
+                        <div class="metric__label">Światło</div>
+                        <div class="metric__value">${fmt(m?.lux)}<span class="metric__unit"> lx</span></div>
                     </div>
                 </div>
                 <div class="card__ts">Ostatni pomiar: ${fmtTime(m?.timestamp)}</div>
@@ -158,15 +158,15 @@
 
     function initCharts() {
         state.charts.temp = makeChart("chart-temp", "Temperatura [°C]", "#ff9d6c");
-        state.charts.pres = makeChart("chart-pres", "Ciśnienie [hPa]", "#c1a4ff");
-        state.charts.hum  = makeChart("chart-hum",  "Wilgotność [%]", "#6cd3ff");
+        state.charts.dist = makeChart("chart-dist", "Odległość [cm]", "#c1a4ff");
+        state.charts.lux  = makeChart("chart-lux",  "Światło [lx]", "#ffd86c");
     }
 
     function setHistory(measurements) {
         const xy = (key) => measurements.map((m) => ({ x: m.timestamp, y: m[key] }));
         state.charts.temp.data.datasets[0].data = xy("temperature");
-        state.charts.pres.data.datasets[0].data = xy("pressure");
-        state.charts.hum.data.datasets[0].data  = xy("humidity");
+        state.charts.dist.data.datasets[0].data = xy("distance");
+        state.charts.lux.data.datasets[0].data  = xy("lux");
         for (const c of Object.values(state.charts)) c.update("none");
     }
 
@@ -179,8 +179,8 @@
             chart.update("none");
         };
         push(state.charts.temp, m.temperature);
-        push(state.charts.pres, m.pressure);
-        push(state.charts.hum,  m.humidity);
+        push(state.charts.dist, m.distance);
+        push(state.charts.lux,  m.lux);
     }
 
     // ---------------------------------------------------------------------- API

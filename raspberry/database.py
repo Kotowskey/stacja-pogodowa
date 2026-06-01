@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS measurements (
     node_id     TEXT    NOT NULL,
     timestamp   TEXT    NOT NULL,
     temperature REAL    NOT NULL,
-    pressure    REAL    NOT NULL,
-    humidity    REAL    NOT NULL
+    distance    REAL    NOT NULL,
+    lux         REAL    NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_meas_node_ts
@@ -40,8 +40,8 @@ def _row_to_measurement(row: aiosqlite.Row) -> MeasurementOut:
         node_id=row["node_id"],
         timestamp=datetime.fromisoformat(row["timestamp"]),
         temperature=row["temperature"],
-        pressure=row["pressure"],
-        humidity=row["humidity"],
+        distance=row["distance"],
+        lux=row["lux"],
     )
 
 
@@ -77,10 +77,10 @@ class Database:
 
         cur = await conn.execute(
             """
-            INSERT INTO measurements (node_id, timestamp, temperature, pressure, humidity)
+            INSERT INTO measurements (node_id, timestamp, temperature, distance, lux)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (node_id, ts_str, m.temperature, m.pressure, m.humidity),
+            (node_id, ts_str, m.temperature, m.distance, m.lux),
         )
         await conn.commit()
         return MeasurementOut(
@@ -88,8 +88,8 @@ class Database:
             node_id=node_id,
             timestamp=ts,
             temperature=m.temperature,
-            pressure=m.pressure,
-            humidity=m.humidity,
+            distance=m.distance,
+            lux=m.lux,
         )
 
     async def latest_per_node(self) -> List[MeasurementOut]:

@@ -126,11 +126,11 @@ class MqttGateway:
             return
 
         log.info(
-            "RX %s | T=%.2f°C  p=%.2f hPa  RH=%.1f%%",
+            "RX %s | T=%.2f°C  d=%.2f cm  L=%.1f lx",
             node_id,
             saved.temperature,
-            saved.pressure,
-            saved.humidity,
+            saved.distance,
+            saved.lux,
         )
         await self._ws.broadcast_json(
             {"type": "measurement", "data": saved.model_dump(mode="json")}

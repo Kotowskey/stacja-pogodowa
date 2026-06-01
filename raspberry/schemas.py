@@ -16,16 +16,16 @@ class MeasurementIn(BaseModel):
           "node_id": "esp32-01",
           "timestamp": "2026-05-18T12:30:00Z",   # opcjonalnie - jeśli brak, ustawiamy po stronie serwera
           "temperature": 23.5,                    # [°C]
-          "pressure": 1013.25,                    # [hPa]
-          "humidity": 55.3                        # [%]
+          "distance": 42.0,                       # [cm]
+          "lux": 350.0                            # [lx]
         }
     """
 
     node_id: Optional[str] = None
     timestamp: Optional[datetime] = None
     temperature: float = Field(..., description="Temperatura [°C]")
-    pressure: float = Field(..., description="Ciśnienie [hPa]")
-    humidity: float = Field(..., ge=0, le=100, description="Wilgotność względna [%]")
+    distance: float = Field(..., description="Odległość [cm]")
+    lux: float = Field(..., ge=0, description="Natężenie światła [lx]")
 
     @field_validator("timestamp", mode="before")
     @classmethod
@@ -46,8 +46,8 @@ class MeasurementOut(BaseModel):
     node_id: str
     timestamp: datetime
     temperature: float
-    pressure: float
-    humidity: float
+    distance: float
+    lux: float
 
 
 class NodeInfo(BaseModel):

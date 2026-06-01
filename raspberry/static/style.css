@@ -105,8 +105,8 @@ main {
 .metric__unit { font-size: 12px; color: var(--muted); margin-left: 2px; }
 
 .metric--temp .metric__value { color: #ff9d6c; }
-.metric--pres .metric__value { color: #c1a4ff; }
-.metric--hum  .metric__value { color: #6cd3ff; }
+.metric--dist .metric__value { color: #c1a4ff; }
+.metric--lux  .metric__value { color: #ffd86c; }
 
 .card__ts { color: var(--muted); font-size: 11px; margin-top: 10px; }
 

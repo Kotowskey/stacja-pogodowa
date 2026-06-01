@@ -49,8 +49,8 @@ iot/
   "node_id": "esp32-01",
   "timestamp": "2026-05-18T12:30:00Z",
   "temperature": 23.5,
-  "pressure": 1013.25,
-  "humidity": 55.3
+  "distance": 42.0,
+  "lux": 350.0
 }
 ```
 
