@@ -84,6 +84,8 @@ Na produkcji ustaw CN/SAN na hostname lub IP Raspberry Pi (wymagane przy łącze
 
 ### 2. Uruchom brokera
 
+Wymagane pliki przed startem: `mosquitto/certs/ca.crt`, `server.crt`, **`server.key`** (generowane skryptem, nie w git).
+
 ```bash
 docker compose up -d mosquitto
 ```
