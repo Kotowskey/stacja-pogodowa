@@ -31,7 +31,12 @@ $serverCrt = Join-Path $CertsDir "server.crt"
 $extFile = Join-Path $CertsDir "server.ext"
 
 Write-Host "[certs] CA ($CaCn)..."
-if (-not (Test-Path $caCrt)) {
+# ca.crt may be committed without ca.key (gitignored); without the key we cannot sign server.crt.
+if ((Test-Path $caCrt) -and -not (Test-Path $caKey)) {
+    Write-Host "[certs] brak ca.key — usuwam stary ca.crt i generuje CA od nowa..."
+    Remove-Item -Force $caCrt, (Join-Path $CertsDir "ca.srl") -ErrorAction SilentlyContinue
+}
+if (-not (Test-Path $caCrt) -or -not (Test-Path $caKey)) {
     openssl genrsa -out $caKey 2048
     openssl req -new -x509 -days $Days -key $caKey -out $caCrt -subj "/CN=$CaCn"
 }

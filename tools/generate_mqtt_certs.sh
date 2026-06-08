@@ -32,7 +32,12 @@ done
 mkdir -p "$CERTS_DIR" "$(dirname "$PASSWD_FILE")"
 
 echo "[certs] CA ($CA_CN)..."
-if [[ ! -f "$CERTS_DIR/ca.crt" ]]; then
+# ca.crt may be committed without ca.key (gitignored); without the key we cannot sign server.crt.
+if [[ -f "$CERTS_DIR/ca.crt" && ! -f "$CERTS_DIR/ca.key" ]]; then
+  echo "[certs] brak ca.key — usuwam stary ca.crt i generuję CA od nowa..."
+  rm -f "$CERTS_DIR/ca.crt" "$CERTS_DIR/ca.srl"
+fi
+if [[ ! -f "$CERTS_DIR/ca.crt" || ! -f "$CERTS_DIR/ca.key" ]]; then
   openssl genrsa -out "$CERTS_DIR/ca.key" 2048
   openssl req -new -x509 -days "$DAYS" -key "$CERTS_DIR/ca.key" \
     -out "$CERTS_DIR/ca.crt" -subj "/CN=$CA_CN"
