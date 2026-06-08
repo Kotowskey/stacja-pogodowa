@@ -26,3 +26,11 @@ Thumbs.db
 *.log
 mosquitto/log/
 mosquitto/data/
+
+# TLS – klucze prywatne (certyfikaty dev można trzymać lokalnie)
+mosquitto/certs/*.key
+mosquitto/certs/*.srl
+mosquitto/certs/ca.srl
+
+# ESP32 – dane dostępowe
+esp32/**/secrets.h

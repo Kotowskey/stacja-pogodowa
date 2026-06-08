@@ -78,6 +78,8 @@ def create_app(config: Optional[AppConfig] = None) -> FastAPI:
         return {
             "status": "ok",
             "mqtt_connected": bool(gateway and gateway.connected),
+            "mqtt_tls": cfg.mqtt.tls.enabled,
+            "mqtt_port": cfg.mqtt.port,
             "time": datetime.utcnow().isoformat() + "Z",
         }
 

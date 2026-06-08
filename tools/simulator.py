@@ -15,11 +15,13 @@ import json
 import math
 import random
 import signal
+import ssl
 import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 import paho.mqtt.client as mqtt
 
@@ -75,7 +77,18 @@ def sample(profile: NodeProfile, t: float) -> dict:
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Symulator węzłów ESP32 dla stacji pogodowej.")
     p.add_argument("--host", default="localhost", help="Adres brokera MQTT (domyślnie localhost)")
-    p.add_argument("--port", type=int, default=1883, help="Port brokera MQTT (domyślnie 1883)")
+    p.add_argument("--port", type=int, default=8883, help="Port brokera MQTT (8883=TLS, 1883=plain)")
+    p.add_argument("--tls", action="store_true", help="Połączenie MQTT over TLS (port 8883)")
+    p.add_argument(
+        "--cafile",
+        default="mosquitto/certs/ca.crt",
+        help="Certyfikat CA brokera (wymagany przy --tls)",
+    )
+    p.add_argument(
+        "--insecure",
+        action="store_true",
+        help="Wyłącz weryfikację certyfikatu (tylko dev)",
+    )
     p.add_argument(
         "--nodes",
         default="esp32-01,esp32-02,esp32-03",
@@ -83,9 +96,18 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--interval", type=float, default=2.0, help="Co ile sekund publikować pomiar")
     p.add_argument("--qos", type=int, default=1, choices=[0, 1, 2], help="QoS publikacji")
-    p.add_argument("--username", default="", help="Login (opcjonalnie)")
-    p.add_argument("--password", default="", help="Hasło (opcjonalnie)")
+    p.add_argument("--username", default="esp32_user", help="Login MQTT")
+    p.add_argument("--password", default="iot-dev-pass", help="Hasło MQTT")
     return p.parse_args()
+
+
+def _resolve_cafile(path: str) -> Optional[str]:
+    p = Path(path)
+    if p.is_absolute():
+        return str(p) if p.exists() else None
+    repo_root = Path(__file__).resolve().parent.parent
+    resolved = repo_root / p
+    return str(resolved) if resolved.exists() else None
 
 
 def main() -> None:
@@ -97,11 +119,30 @@ def main() -> None:
 
     profiles = make_default_nodes(node_ids)
 
+    use_tls = args.tls or args.port == 8883
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"simulator-{int(time.time())}")
     if args.username:
         client.username_pw_set(args.username, args.password or None)
 
-    print(f"[symulator] łączenie z {args.host}:{args.port} ...")
+    if use_tls:
+        cafile = _resolve_cafile(args.cafile)
+        if not cafile and not args.insecure:
+            print(
+                f"Brak pliku CA: {args.cafile}. Uruchom tools/generate_mqtt_certs.ps1 "
+                "lub użyj --insecure (dev).",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        client.tls_set(
+            ca_certs=cafile,
+            cert_reqs=ssl.CERT_NONE if args.insecure else ssl.CERT_REQUIRED,
+            tls_version=ssl.PROTOCOL_TLS_CLIENT,
+        )
+        if args.insecure:
+            client.tls_insecure_set(True)
+
+    proto = "mqtts" if use_tls else "mqtt"
+    print(f"[symulator] łączenie z {proto}://{args.host}:{args.port} ...")
     client.connect(args.host, args.port, keepalive=60)
     client.loop_start()
 

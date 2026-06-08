@@ -11,6 +11,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import ssl
+from pathlib import Path
 from typing import Optional
 
 import paho.mqtt.client as mqtt
@@ -51,12 +53,17 @@ class MqttGateway:
         if self._cfg.username:
             client.username_pw_set(self._cfg.username, self._cfg.password or None)
 
+        if self._cfg.tls.enabled:
+            self._configure_tls(client)
+
         client.on_connect = self._on_connect
         client.on_disconnect = self._on_disconnect
         client.on_message = self._on_message
 
+        proto = "mqtts" if self._cfg.tls.enabled else "mqtt"
         log.info(
-            "MQTT: łączę z %s:%s (topic=%s)",
+            "MQTT: łączę z %s://%s:%s (topic=%s)",
+            proto,
             self._cfg.host,
             self._cfg.port,
             self._cfg.topic_subscribe,
@@ -76,6 +83,36 @@ class MqttGateway:
     @property
     def connected(self) -> bool:
         return self._connected.is_set()
+
+    def _resolve_cert_path(self, path: str) -> str:
+        p = Path(path)
+        if p.is_absolute():
+            return str(p)
+        repo_root = Path(__file__).resolve().parent.parent
+        return str(repo_root / p)
+
+    def _configure_tls(self, client: mqtt.Client) -> None:
+        tls = self._cfg.tls
+        ca_file = self._resolve_cert_path(tls.ca_file) if tls.ca_file else None
+        certfile = self._resolve_cert_path(tls.certfile) if tls.certfile else None
+        keyfile = self._resolve_cert_path(tls.keyfile) if tls.keyfile else None
+
+        if ca_file and not Path(ca_file).exists():
+            raise FileNotFoundError(
+                f"Brak pliku CA dla TLS: {ca_file}. "
+                "Uruchom tools/generate_mqtt_certs.ps1 lub .sh"
+            )
+
+        client.tls_set(
+            ca_certs=ca_file,
+            certfile=certfile,
+            keyfile=keyfile,
+            cert_reqs=ssl.CERT_NONE if tls.insecure else ssl.CERT_REQUIRED,
+            tls_version=ssl.PROTOCOL_TLS_CLIENT,
+        )
+        if tls.insecure:
+            client.tls_insecure_set(True)
+            log.warning("MQTT TLS: tryb insecure (bez weryfikacji certyfikatu)")
 
     # --------------------------------------------------------------- callbacks
     def _on_connect(self, client: mqtt.Client, userdata, flags, reason_code, properties):

@@ -15,6 +15,17 @@ import yaml
 from pydantic import BaseModel, Field
 
 
+class MqttTlsConfig(BaseModel):
+    """TLS/SSL dla połączenia z brokerem Mosquitto (port 8883)."""
+
+    enabled: bool = False
+    ca_file: str = "mosquitto/certs/ca.crt"
+    certfile: str = ""
+    keyfile: str = ""
+    # Tylko dev: wyłącza weryfikację certyfikatu (NIE używać w produkcji)
+    insecure: bool = False
+
+
 class MqttConfig(BaseModel):
     host: str = "localhost"
     port: int = 1883
@@ -24,6 +35,7 @@ class MqttConfig(BaseModel):
     topic_subscribe: str = "weather/+/data"
     qos: int = 1
     keepalive: int = 60
+    tls: MqttTlsConfig = Field(default_factory=MqttTlsConfig)
 
 
 class DatabaseConfig(BaseModel):

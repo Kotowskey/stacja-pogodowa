@@ -3,15 +3,15 @@
 Projekt systemu IoT zgodny z założeniami z `Projekt.pdf`:
 
 - **System IoT** z minimum 3 węzłami i minimum 2 czujnikami (BME680 → temperatura `T`, ciśnienie `p`, wilgotność `H`).
-- **Komunikacja:** MQTT (broker Mosquitto), payload w formacie JSON.
-- **Raspberry Pi** pełni rolę **gateway + baza + wizualizacja** z widocznością na zewnątrz (panel webowy w LAN).
-- ESP32 (węzły) zostaną dodane w kolejnym etapie — tymczasem do testów służy symulator publikujący identyczne pakiety.
+- **Komunikacja:** MQTT (broker Mosquitto) z **szyfrowaniem TLS** (port 8883), payload w formacie JSON.
+- **Raspberry Pi 3** pełni rolę **gateway + broker + baza + wizualizacja** z widocznością na zewnątrz (panel webowy w LAN).
+- **ESP32** publikuje pomiary przez MQTT over TLS; do testów służy symulator z identycznym protokołem.
 
 ```
-┌──────────┐   MQTT   ┌──────────────┐   HTTP/WS   ┌────────────┐
-│  ESP32   │────────► │  Mosquitto   │ ◄─────────► │ Raspberry  │
-│ (węzeł)  │ JSON     │   (broker)   │             │   Pi GW    │ ──► Web UI / API
-└──────────┘          └──────────────┘             └────────────┘
+┌──────────┐  MQTT/TLS  ┌──────────────┐   HTTP/WS   ┌────────────┐
+│  ESP32   │──────────► │  Mosquitto   │ ◄─────────► │ Raspberry  │
+│ (węzeł)  │  :8883     │   (broker)   │   mqtts     │   Pi GW    │ ──► Web UI / API
+└──────────┘  JSON      └──────────────┘             └────────────┘
                                                           │
                                                           ▼
                                                       SQLite DB
@@ -21,22 +21,18 @@ Projekt systemu IoT zgodny z założeniami z `Projekt.pdf`:
 
 ```
 iot/
-├── config.yaml                  konfiguracja bramki (MQTT, baza, web, węzły)
+├── config.yaml                  konfiguracja bramki (MQTT + TLS, baza, web)
 ├── docker-compose.yml           Mosquitto w kontenerze (dev)
-├── mosquitto/config/            konfiguracja brokera
-├── requirements.txt             zależności Pythona
+├── mosquitto/
+│   ├── config/                  mosquitto.conf, tls.conf, passwd
+│   └── certs/                   CA + certyfikat serwera (generowane skryptem)
+├── esp32/weather_node/          firmware ESP32 (Arduino IDE, MQTT TLS)
 ├── raspberry/                   aplikacja Raspberry Pi (FastAPI + MQTT + SQLite)
-│   ├── main.py                  punkt wejścia (uvicorn)
-│   ├── api.py                   REST + WebSocket + UI
-│   ├── mqtt_client.py           bramka MQTT → DB → WebSocket
-│   ├── database.py              SQLite (aiosqlite)
-│   ├── schemas.py               modele Pydantic
-│   ├── config.py                ładowanie YAML
-│   ├── websocket_manager.py     broadcasting WS
-│   ├── templates/index.html     dashboard
-│   └── static/{style.css,app.js}
 └── tools/
-    └── simulator.py             symulator 3 węzłów ESP32
+    ├── generate_mqtt_certs.ps1  generowanie PKI (Windows)
+    ├── generate_mqtt_certs.sh   generowanie PKI (Linux / RPi)
+    ├── mqtt_passwd.py           generator pliku haseł Mosquitto
+    └── simulator.py             symulator 3 węzłów ESP32 (MQTT TLS)
 ```
 
 ## Format wiadomości MQTT
@@ -57,87 +53,123 @@ iot/
 Pole `timestamp` jest opcjonalne — jeśli go nie ma, bramka stempluje pomiar czasem odbioru.
 Pole `node_id` w payloadzie jest opcjonalne — alternatywnie brane jest z topicu.
 
-## Wymagania
+## Szyfrowanie MQTT (TLS)
 
-- Python 3.10+ (testowane z 3.13)
-- Broker Mosquitto (lokalnie, w Dockerze lub np. na innym hoście)
-- (opcjonalnie) Docker / Docker Compose — najszybszy sposób uruchomienia brokera
+Komunikacja ESP32 ↔ Raspberry Pi jest szyfrowana warstwą **TLS/SSL** na brokerze Mosquitto (self-signed CA + hasła użytkowników). Schemat zgodny z dokumentacją w `Claude.html`.
 
-## Szybki start (środowisko deweloperskie)
+| Element | Wartość domyślna (dev) |
+|---------|------------------------|
+| Port TLS | `8883` |
+| Użytkownik ESP32 / symulator | `esp32_user` |
+| Użytkownik bramki RPi | `rpi_gateway` |
+| Hasło (dev) | `iot-dev-pass` |
+| Certyfikat CA | `mosquitto/certs/ca.crt` |
 
-### 1. Uruchom brokera Mosquitto
+### 1. Wygeneruj certyfikaty i hasła
 
-Najprościej w Dockerze:
+**Windows (PowerShell):**
+
+```powershell
+.\tools\generate_mqtt_certs.ps1
+```
+
+**Linux / Raspberry Pi 3:**
+
+```bash
+chmod +x tools/generate_mqtt_certs.sh
+./tools/generate_mqtt_certs.sh --server-cn raspberrypi.local --san-ip TWOJE_IP
+```
+
+Na produkcji ustaw CN/SAN na hostname lub IP Raspberry Pi (wymagane przy łączeniu po IP z ESP32).
+
+### 2. Uruchom brokera
 
 ```bash
 docker compose up -d mosquitto
 ```
 
-Albo zainstaluj Mosquitto lokalnie i wskaż go w `config.yaml` (`mqtt.host`, `mqtt.port`).
+Broker nasłuchuje na **8883** (TLS + hasło) oraz **1883** (plain, tylko localhost w kontenerze).
 
-### 2. Zainstaluj zależności i uruchom bramkę
+### 3. Bramka Raspberry Pi
 
-```bash
-python -m venv .venv
-# Windows:
-.venv\Scripts\activate
-# Linux/macOS:
-source .venv/bin/activate
-
-pip install -r requirements.txt
-python -m raspberry.main
-```
-
-Bramka:
-
-- nasłuchuje MQTT na topicu z `config.yaml` (`weather/+/data`),
-- zapisuje pomiary do SQLite (`data/weather.db`),
-- udostępnia dashboard pod **http://localhost:8000** oraz REST/WS dla integracji.
-
-### 3. Uruchom symulator (zamiast ESP32)
-
-```bash
-python tools/simulator.py --host localhost --interval 2
-```
-
-W dashboardzie pojawią się 3 węzły z aktualizacją w czasie rzeczywistym.
-
-## API HTTP
-
-| Metoda | Endpoint                              | Opis                                              |
-|--------|---------------------------------------|---------------------------------------------------|
-| GET    | `/`                                   | Dashboard webowy                                  |
-| GET    | `/api/health`                         | Status bramki + MQTT                              |
-| GET    | `/api/nodes`                          | Lista węzłów + ostatni pomiar każdego z nich      |
-| GET    | `/api/measurements/latest`            | Najnowszy pomiar dla każdego węzła                |
-| GET    | `/api/measurements/history?node_id=…&limit=…` | Historia pomiarów (do wykresów)         |
-| WS     | `/ws`                                 | Strumień pomiarów na żywo (`{type, data}`)        |
-
-## Konfiguracja
-
-Plik `config.yaml` w katalogu głównym repo. Ścieżkę można nadpisać zmienną `IOT_CONFIG`.
+`config.yaml` domyślnie używa TLS:
 
 ```yaml
 mqtt:
   host: "localhost"
-  port: 1883
-  topic_subscribe: "weather/+/data"
-database:
-  path: "data/weather.db"
-  history_limit: 500
-web:
-  host: "0.0.0.0"   # 0.0.0.0 => dashboard widoczny w sieci LAN
-  port: 8000
-nodes:
-  - { id: "esp32-01", name: "Salon" }
-  - { id: "esp32-02", name: "Sypialnia" }
-  - { id: "esp32-03", name: "Balkon" }
+  port: 8883
+  username: "rpi_gateway"
+  password: "iot-dev-pass"
+  tls:
+    enabled: true
+    ca_file: "mosquitto/certs/ca.crt"
 ```
 
-## Co dalej (kolejne etapy projektu)
-
-- Firmware dla ESP32 z czujnikiem **BME680** publikującym do MQTT na opisanym wyżej topicu/payloadzie.
-- Drugi czujnik (zgodnie z założeniami min. 2 HW), np. **PMS7003** (pyły) lub **HC-SR04** (dystans).
-- Alternatywne formaty payloadu: Protobuf / FlatBuffers / ASCII / binary (zgodnie z `Projekt.pdf`).
-- Eksport pomiarów do chmury (np. MQTT bridge lub HTTP push).
+```bash
+pip install -r requirements.txt
+python -m raspberry.main
 ```
+
+### 4. Symulator (zamiast ESP32)
+
+```bash
+python tools/simulator.py --host localhost --port 8883 --interval 2
+```
+
+### 5. ESP32 (Arduino IDE)
+
+1. Otwórz `esp32/weather_node/WeatherNode.ino` w Arduino IDE.
+2. Zainstaluj bibliotekę **PubSubClient** (≥ 2.8).
+3. Skopiuj `secrets.h.example` → `secrets.h`.
+4. Wklej zawartość `mosquitto/certs/ca.crt` do `CA_CERT` w `secrets.h`.
+5. Ustaw `MQTT_HOST` na IP Raspberry Pi i `NODE_ID` (np. `esp32-01`).
+6. Wgraj firmware — w Serial Monitorze (115200) powinno pojawić się `Polaczono z brokerem (TLS)`.
+
+### Wdrożenie na Raspberry Pi 3 (natywny Mosquitto)
+
+```bash
+sudo apt install -y mosquitto mosquitto-clients openssl
+./tools/generate_mqtt_certs.sh --server-cn raspberrypi.local --san-ip $(hostname -I | awk '{print $1}')
+sudo cp mosquitto/certs/{ca.crt,server.crt,server.key} /etc/mosquitto/certs/
+sudo cp mosquitto/config/passwd /etc/mosquitto/passwd
+sudo cp mosquitto/config/rpi-tls.conf.example /etc/mosquitto/conf.d/tls.conf
+sudo chown mosquitto: /etc/mosquitto/certs/* /etc/mosquitto/passwd
+sudo systemctl restart mosquitto
+```
+
+Test:
+
+```bash
+mosquitto_sub -h localhost -p 8883 \
+  --cafile mosquitto/certs/ca.crt \
+  -u esp32_user -P iot-dev-pass \
+  -t "weather/+/data" -v
+```
+
+## Wymagania
+
+- Python 3.10+
+- OpenSSL (generowanie certyfikatów)
+- Broker Mosquitto (Docker lub natywnie na RPi)
+- (opcjonalnie) Docker Compose
+
+## API HTTP
+
+| Metoda | Endpoint | Opis |
+|--------|----------|------|
+| GET | `/` | Dashboard webowy |
+| GET | `/api/health` | Status bramki + MQTT (+ `mqtt_tls`, `mqtt_port`) |
+| GET | `/api/nodes` | Lista węzłów + ostatni pomiar |
+| GET | `/api/measurements/latest` | Najnowszy pomiar dla każdego węzła |
+| GET | `/api/measurements/history?node_id=…&limit=…` | Historia pomiarów |
+| WS | `/ws` | Strumień pomiarów na żywo |
+
+## Tryb bez TLS (tylko dev)
+
+Wyłącz TLS w `config.yaml` (`mqtt.tls.enabled: false`, `port: 1883`) i uruchom brokera bez `tls.conf`. Nie używaj tego w sieci produkcyjnej.
+
+## Co dalej
+
+- Podłączenie czujnika **BME680** i **HC-SR04** w firmware ESP32.
+- Rotacja certyfikatów (plik CA w SPIFFS lub NVS na ESP32).
+- mTLS (certyfikat klienta na ESP32) — opcjonalnie dla wyższego poziomu bezpieczeństwa.

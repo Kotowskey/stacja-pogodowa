@@ -1,0 +1,24 @@
+# Przykład konfiguracji TLS na Raspberry Pi 3 (natywny Mosquitto).
+# Skopiuj do /etc/mosquitto/conf.d/tls.conf po wygenerowaniu certyfikatów.
+#
+#   ./tools/generate_mqtt_certs.sh --server-cn raspberrypi.local --san-ip TWOJE_IP
+#   sudo cp mosquitto/certs/{ca.crt,server.crt,server.key} /etc/mosquitto/certs/
+#   sudo cp mosquitto/config/passwd /etc/mosquitto/passwd
+#   sudo chown mosquitto: /etc/mosquitto/certs/* /etc/mosquitto/passwd
+#   sudo cp mosquitto/config/rpi-tls.conf.example /etc/mosquitto/conf.d/tls.conf
+#   sudo systemctl restart mosquitto
+
+listener 8883
+cafile   /etc/mosquitto/certs/ca.crt
+certfile /etc/mosquitto/certs/server.crt
+keyfile  /etc/mosquitto/certs/server.key
+
+tls_version tlsv1.2
+require_certificate false
+
+allow_anonymous false
+password_file /etc/mosquitto/passwd
+
+# Opcjonalnie: lokalny port bez TLS (tylko localhost)
+listener 1883 127.0.0.1
+allow_anonymous true

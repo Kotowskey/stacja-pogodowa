@@ -3,26 +3,28 @@
 
 mqtt:
   host: "localhost"
-  port: 1883
-  username: ""           # puste = bez uwierzytelniania
-  password: ""
+  port: 8883
+  username: "rpi_gateway"
+  password: "iot-dev-pass"
   client_id: "rpi-gateway"
-  # Subskrybujemy pomiary ze wszystkich węzłów: weather/<node_id>/data
   topic_subscribe: "weather/+/data"
   qos: 1
   keepalive: 60
+  tls:
+    enabled: true
+    ca_file: "mosquitto/certs/ca.crt"
+    # certfile/keyfile: opcjonalnie dla mTLS
+    insecure: false
 
 database:
   path: "data/weather.db"
-  # Limit rekordów zwracanych przez /api/history (najnowsze N)
   history_limit: 500
 
 web:
-  host: "0.0.0.0"        # 0.0.0.0 = dostępny w sieci LAN ("widoczność na zewnątrz")
+  host: "0.0.0.0"
   port: 8000
   title: "Stacja Pogodowa - IoT"
 
-# Lista oczekiwanych węzłów (do UI). Węzły spoza listy też są przyjmowane.
 nodes:
   - id: "esp32-01"
     name: "Salon"
