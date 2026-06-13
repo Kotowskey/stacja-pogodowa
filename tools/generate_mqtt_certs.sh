@@ -66,11 +66,6 @@ openssl x509 -req -in "$CERTS_DIR/server.csr" -CA "$CERTS_DIR/ca.crt" \
 
 rm -f "$CERTS_DIR/server.csr" "$EXT_FILE"
 
-# Docker (eclipse-mosquitto) uruchamia proces jako uid 1883 — klucze 600 root:root
-# na volume Linuxa powodują "Permission denied" i pętlę restartów.
-chmod 644 "$CERTS_DIR/server.key" "$CERTS_DIR/ca.key" 2>/dev/null || true
-chmod 644 "$CERTS_DIR/server.crt" "$CERTS_DIR/ca.crt" 2>/dev/null || true
-
 echo "[certs] plik haseł MQTT..."
 if command -v mosquitto_passwd >/dev/null 2>&1; then
   mosquitto_passwd -b -c "$PASSWD_FILE" esp32_user "$ESP32_PASS"

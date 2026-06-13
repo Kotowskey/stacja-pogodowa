@@ -1,170 +1,123 @@
+/**
+ * Węzeł pogodowy ESP32 – publikacja pomiarów przez MQTT over TLS.
+ * Format zgodny z bramką Raspberry Pi: topic weather/<node_id>/data
+ *
+ * Biblioteki (Arduino Library Manager): PubSubClient (Nick O'Leary) >= 2.8
+ * WiFiClientSecure – wbudowana w ESP32 core.
+ *
+ * Skopiuj secrets.h.example → secrets.h i wklej certyfikat CA.
+ */
+
 #include <WiFi.h>
-#include <Wire.h>
-#include <PubSubClient.h>
-#include <SparkFunTMP102.h>
-#include <ArduinoJson.h>
-#include <time.h>
 #include <WiFiClientSecure.h>
-#include "secure.h"
-// --- Konfiguracja sieci i MQTT ---
-const char* WIFI_SSID = "MojaSiecWifi";
-const char* WIFI_PASSWORD = "raspberry";
-const char* MQTT_HOST = "10.16.232.162";
-const uint16_t MQTT_PORT = 8883;
-const char* MQTT_CLIENT_ID = "ESP32_Klient_Testowy";
-const char* MQTT_CMD_TOPIC = "rpi/komendy";
+#include <PubSubClient.h>
+#include "secrets.h"
 
-// --- Węzeł ---
-const char* NODE_ID = "esp32-01";
-const char* DATA_TOPIC = "weather/esp32-01/data";
-// --- Sprzęt ---
-const int ALERT_PIN = A3;
-const unsigned long PUBLISH_INTERVAL_MS = 2000;
+#ifndef NODE_ID
+#define NODE_ID MQTT_CLIENT_ID
+#endif
 
-//TMP102 sensor0;
-WiFiClientSecure espClient;
-PubSubClient client(espClient);
+WiFiClientSecure tlsClient;
+PubSubClient mqttClient(tlsClient);
 
-unsigned long lastPublish = 0;
-bool ntpSynced = false;
+unsigned long lastPublishMs = 0;
+const long publishIntervalMs = 5000;
+
+char topicData[48];
 
 void printTLSError() {
-  char errBuf[256];
-  int err = espClient.lastError(errBuf, sizeof(errBuf));
+  int err = tlsClient.lastError(nullptr, 0);
   if (err != 0) {
+    char errBuf[256];
+    tlsClient.lastError(errBuf, sizeof(errBuf));
     Serial.printf("[TLS] Blad %d: %s\n", err, errBuf);
   }
 }
-void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("MQTT RX [");
-  Serial.print(topic);
-  Serial.print("]: ");
-  for (unsigned int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-}
-void setupWifi() {
-  Serial.print("Łączenie z siecią: ");
-  Serial.println(WIFI_SSID);
+
+void connectWiFi() {
+  if (WiFi.status() == WL_CONNECTED) return;
+
+  Serial.printf("[WiFi] Laczenie z %s ...\n", WIFI_SSID);
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  int attempts = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-  }
-  Serial.println();
-  Serial.println("WiFi połączone!");
-  Serial.print("Adres IP ESP32: ");
-  Serial.println(WiFi.localIP());
-}
-void setupNtp() {
-  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-  struct tm timeinfo;
-  for (int i = 0; i < 20; i++) {
-    if (getLocalTime(&timeinfo)) {
-      ntpSynced = true;
-      Serial.println("Czas zsynchronizowany (NTP).");
-      return;
+    if (++attempts > 40) {
+      Serial.println("\n[WiFi] BLAD – restart");
+      ESP.restart();
     }
-    delay(500);
   }
-  Serial.println("NTP niedostępny — timestamp zostanie pominięty.");
+  Serial.printf("\n[WiFi] Polaczono, IP: %s\n", WiFi.localIP().toString().c_str());
 }
-bool getIsoTimestamp(char* buffer, size_t bufferSize) {
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    return false;
-  }
-  strftime(buffer, bufferSize, "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
-  return true;
-}
-void reconnectMqtt() {
-  while (!client.connected()) {
-    Serial.print("Próba połączenia MQTT... ");
-    if (client.connect(MQTT_CLIENT_ID,MQTT_USER,
-            MQTT_PASSWORD)) {
-      Serial.println("połączono!");
-      client.subscribe(MQTT_CMD_TOPIC);
+
+void connectMQTT() {
+  while (!mqttClient.connected()) {
+    Serial.printf("[MQTT] Laczenie z %s:%d (TLS) ...\n", MQTT_HOST, MQTT_PORT);
+
+    if (mqttClient.connect(MQTT_CLIENT_ID, MQTT_USER, MQTT_PASSWORD)) {
+      Serial.println("[MQTT] Polaczono z brokerem (TLS)");
     } else {
-      Serial.print("błąd, rc=");
-      Serial.println(client.state());
+      Serial.printf("[MQTT] Blad, rc=%d\n", mqttClient.state());
       printTLSError();
       delay(5000);
     }
   }
 }
+
+void publishMeasurement() {
+  // TODO: podłącz prawdziwe czujniki (BME680, HC-SR04, ...)
+  float temperature = 22.0f + (random(0, 100) / 100.0f);
+  float distance = 40.0f + (random(0, 200) / 10.0f);
+  float lux = 300.0f + random(0, 150);
+
+  char payload[256];
+  snprintf(
+    payload, sizeof(payload),
+    "{\"node_id\":\"%s\",\"temperature\":%.2f,\"distance\":%.2f,\"lux\":%.1f}",
+    NODE_ID,
+    roundf(temperature * 100.0f) / 100.0f,
+    roundf(distance * 100.0f) / 100.0f,
+    roundf(lux * 10.0f) / 10.0f
+  );
+
+  if (mqttClient.publish(topicData, payload, false)) {
+    Serial.printf("[MQTT] -> %s  %s\n", topicData, payload);
+  } else {
+    Serial.println("[MQTT] Blad publikacji");
+  }
+}
+
 void setup() {
   Serial.begin(115200);
-  Wire.begin();
-  pinMode(ALERT_PIN, INPUT);
-  
-  setupWifi();
-  espClient.setCACert(CA_CERT);
+  delay(500);
+  randomSeed(esp_random());
 
-  setupNtp();
-  client.setServer(MQTT_HOST, MQTT_PORT);
-  client.setCallback(mqttCallback);
-  client.setBufferSize(512);
-  // if (!sensor0.begin()) {
-  //   Serial.println("Błąd: brak połączenia z TMP102.");
-  //   Serial.println("Sprawdź okablowanie I2C i adres urządzenia.");
-  //   while (true) {
-  //     delay(1000);
-  //   }
-  // }
-  // Serial.println("TMP102 gotowy.");
-  // sensor0.setConversionRate(2);
-  delay(100);
+  snprintf(topicData, sizeof(topicData), "weather/%s/data", NODE_ID);
+
+  connectWiFi();
+
+  tlsClient.setCACert(CA_CERT);
+  mqttClient.setServer(MQTT_HOST, MQTT_PORT);
+  mqttClient.setBufferSize(512);
+
+  connectMQTT();
 }
+
 void loop() {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("Utracono WiFi — ponowne łączenie...");
-    setupWifi();
-    if (!ntpSynced) {
-      setupNtp();
-    }
+    connectWiFi();
   }
-  if (!client.connected()) {
-    reconnectMqtt();
+  if (!mqttClient.connected()) {
+    connectMQTT();
   }
-  client.loop();
-  // sensor0.wakeup();
-  // float temperatureC = sensor0.readTempC();
-  // float temperatureF = sensor0.readTempF();
-  // sensor0.sleep();
-  float temperatureC = 21.37f;
-  float temperatureF = 69.67f;
-  bool alertPinState = (digitalRead(ALERT_PIN) == LOW);
-  Serial.print("Temperatura: ");
-  Serial.print(temperatureF);
-  Serial.print(" °F / ");
-  Serial.print(temperatureC);
-  Serial.print(" °C");
-  Serial.print(" | alert pin: ");
-  Serial.println(alertPinState ? "AKTYWNY" : "OK");
+  mqttClient.loop();
+
   unsigned long now = millis();
-  if (now - lastPublish >= PUBLISH_INTERVAL_MS) {
-    lastPublish = now;
-    StaticJsonDocument<256> doc;
-    doc["node_id"] = NODE_ID;
-    doc["temperature"] = round(temperatureC * 100.0) / 100.0;
-    // TMP102 mierzy tylko temperaturę. Zamień na odczyt z BME680:
-    doc["lux"] = 0;
-    doc["distance"] = 0;
-    char timestamp[25];
-    if (getIsoTimestamp(timestamp, sizeof(timestamp))) {
-      doc["timestamp"] = timestamp;
-    }
-    char jsonBuffer[256];
-    serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
-    if (client.publish(DATA_TOPIC, jsonBuffer, false)) {
-      Serial.print("Wysłano do ");
-      Serial.print(DATA_TOPIC);
-      Serial.print(": ");
-      Serial.println(jsonBuffer);
-    } else {
-      Serial.println("Błąd publikacji MQTT.");
-    }
+  if (now - lastPublishMs >= (unsigned long)publishIntervalMs) {
+    lastPublishMs = now;
+    publishMeasurement();
   }
 }

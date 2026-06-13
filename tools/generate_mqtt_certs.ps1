@@ -64,11 +64,6 @@ openssl x509 -req -in $serverCsr -CA $caCrt -CAkey $caKey -CAcreateserial `
 
 Remove-Item -Force $serverCsr, $extFile -ErrorAction SilentlyContinue
 
-# Czytelne dla kontenera eclipse-mosquitto (uid 1883 na volume)
-if (Get-Command chmod -ErrorAction SilentlyContinue) {
-    chmod 644 $serverKey, $caKey, $serverCrt, $caCrt 2>$null
-}
-
 Write-Host "[certs] plik hasel MQTT ($PasswdFile)..."
 python "$RepoRoot/tools/mqtt_passwd.py" -c "$PasswdFile" esp32_user "$Esp32Password"
 python "$RepoRoot/tools/mqtt_passwd.py" "$PasswdFile" rpi_gateway "$GatewayPassword"
