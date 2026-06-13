@@ -87,8 +87,20 @@ Na produkcji ustaw CN/SAN na hostname lub IP Raspberry Pi (wymagane przy łącze
 Wymagane pliki przed startem: `mosquitto/certs/ca.crt`, `server.crt`, **`server.key`** (generowane skryptem, nie w git).
 
 ```bash
+./tools/check_mosquitto_docker.sh   # opcjonalnie: weryfikacja przed startem
 docker compose up -d mosquitto
+docker logs iot-mosquitto            # powinno być: mosquitto version … running
 ```
+
+Jeśli kontener ma stan **Restarting**, typowe przyczyny:
+
+| Log | Rozwiązanie |
+|-----|-------------|
+| `Unable to load server key file` + `No such file` | Brak `server.key` → `./tools/generate_mqtt_certs.sh --san-ip TWOJE_IP` |
+| `Unable to load server key file` + `Permission denied` | `chmod 644 mosquitto/certs/server.key` |
+| `Unknown configuration variable 'include'` | Usuń `include` z `mosquitto.conf` (użyj wersji z repo) |
+| `Address already in use` na 8883 | Zatrzymaj natywny Mosquitto: `sudo systemctl stop mosquitto` |
+| Plik `mosquitto/config/conf.d/tls.conf` | Usuń — Docker nie używa `conf.d/` (podwójny listener) |
 
 Broker nasłuchuje na **8883** (TLS + hasło) oraz **1883** (plain, tylko localhost w kontenerze).
 
