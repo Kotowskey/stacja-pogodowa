@@ -2,7 +2,7 @@
 # Plik wczytywany przez raspberry/config.py
 
 mqtt:
-  host: "localhost"
+  host: "10.16.232.162"
   port: 8883
   username: "rpi_gateway"
   password: "iot-dev-pass"
