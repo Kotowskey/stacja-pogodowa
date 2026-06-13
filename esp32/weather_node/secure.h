@@ -1,22 +1,10 @@
 #pragma once
 
-// Skopiuj jako secrets.h i uzupełnij (secrets.h jest w .gitignore).
-// Certyfikat CA: cat mosquitto/certs/ca.crt (na RPi lub po generate_mqtt_certs)
-
-// ── WiFi ──────────────────────────────────────────────────
-#define WIFI_SSID     "MojaSiecWifi"
-#define WIFI_PASSWORD "raspberry"
-
-// ── MQTT (Raspberry Pi 3 / broker Mosquitto TLS) ──────────
-#define MQTT_HOST     "10.201.225.163"   // IP Raspberry Pi lub raspberrypi.local
-#define MQTT_PORT     8883
 #define MQTT_USER     "esp32_user"
 #define MQTT_PASSWORD "iot-dev-pass"
-#define MQTT_CLIENT_ID "esp32-01"
-#define NODE_ID       "esp32-01"
 
-// ── Certyfikat CA (PEM) ───────────────────────────────────
-// Wklej całą zawartość mosquitto/certs/ca.crt między R"EOF( a )EOF"
+// ── Certyfikat CA (skopiuj z: cat ~/mqtt-certs/ca.crt) ───
+// Każda linia musi kończyć się \n w środku stringa
 const char CA_CERT[] PROGMEM = R"EOF(
 -----BEGIN CERTIFICATE-----
 MIIDBTCCAe2gAwIBAgIUeKKLlEB4Tk9OHBGHobdWZx2fUdswDQYJKoZIhvcNAQEL
