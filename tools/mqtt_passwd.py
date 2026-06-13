@@ -41,8 +41,14 @@ def main() -> None:
     line = f"{args.username}:{hash_password(args.password)}\n"
     mode = "w" if args.create or not args.passwd_file.exists() else "a"
     args.passwd_file.parent.mkdir(parents=True, exist_ok=True)
-    with args.passwd_file.open(mode, encoding="utf-8", newline="\n") as fh:
-        fh.write(line)
+    try:
+        with args.passwd_file.open(mode, encoding="utf-8", newline="\n") as fh:
+            fh.write(line)
+    except PermissionError:
+        raise SystemExit(
+            f"Brak uprawnień zapisu: {args.passwd_file}\n"
+            f"  sudo chown \"$USER:$USER\" {args.passwd_file}"
+        ) from None
     print(f"OK: {args.username} -> {args.passwd_file}")
 
 

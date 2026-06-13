@@ -78,14 +78,29 @@ openssl x509 -req -in "$CERTS_DIR/server.csr" -CA "$CERTS_DIR/ca.crt" \
 
 rm -f "$CERTS_DIR/server.csr" "$EXT_FILE"
 
+write_mqtt_passwd() {
+  if [[ -f "$PASSWD_FILE" && ! -w "$PASSWD_FILE" ]]; then
+    echo "[certs] pomijam passwd — $PASSWD_FILE istnieje, ale nie masz uprawnień zapisu."
+    echo "[certs]   sudo chown \"\$USER:\$USER\" \"$PASSWD_FILE\""
+    echo "[certs]   (istniejący plik z repo ma domyślne hasła: $ESP32_PASS)"
+    return 0
+  fi
+  if [[ ! -f "$PASSWD_FILE" && ! -w "$(dirname "$PASSWD_FILE")" ]]; then
+    echo "[certs] błąd: brak uprawnień do utworzenia $PASSWD_FILE" >&2
+    echo "[certs]   sudo chown -R \"\$USER:\$USER\" \"$(dirname "$PASSWD_FILE")\"" >&2
+    return 1
+  fi
+  if command -v mosquitto_passwd >/dev/null 2>&1; then
+    mosquitto_passwd -b -c "$PASSWD_FILE" esp32_user "$ESP32_PASS"
+    mosquitto_passwd -b "$PASSWD_FILE" rpi_gateway "$GATEWAY_PASS"
+  else
+    python3 "$REPO_ROOT/tools/mqtt_passwd.py" -c "$PASSWD_FILE" esp32_user "$ESP32_PASS"
+    python3 "$REPO_ROOT/tools/mqtt_passwd.py" "$PASSWD_FILE" rpi_gateway "$GATEWAY_PASS"
+  fi
+}
+
 echo "[certs] plik haseł MQTT..."
-if command -v mosquitto_passwd >/dev/null 2>&1; then
-  mosquitto_passwd -b -c "$PASSWD_FILE" esp32_user "$ESP32_PASS"
-  mosquitto_passwd -b "$PASSWD_FILE" rpi_gateway "$GATEWAY_PASS"
-else
-  python3 "$REPO_ROOT/tools/mqtt_passwd.py" -c "$PASSWD_FILE" esp32_user "$ESP32_PASS"
-  python3 "$REPO_ROOT/tools/mqtt_passwd.py" "$PASSWD_FILE" rpi_gateway "$GATEWAY_PASS"
-fi
+write_mqtt_passwd
 
 echo ""
 echo "Gotowe. CA dla ESP32: $CERTS_DIR/ca.crt"
