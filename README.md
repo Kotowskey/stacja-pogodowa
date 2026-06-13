@@ -90,6 +90,8 @@ Wymagane pliki przed startem: `mosquitto/certs/ca.crt`, `server.crt`, **`server.
 docker compose up -d mosquitto
 ```
 
+Na Windows/macOS obraz Docker kopiuje certyfikaty i `passwd` do wewnętrznego systemu plików kontenera z poprawnymi uprawnieniami (bind mounty nie obsługują `chmod`/`chown`).
+
 Broker nasłuchuje na **8883** (TLS + hasło) oraz **1883** (plain, tylko localhost w kontenerze).
 
 ### 3. Bramka Raspberry Pi

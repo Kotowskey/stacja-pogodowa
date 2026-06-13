@@ -38,7 +38,8 @@ if ((Test-Path $caCrt) -and -not (Test-Path $caKey)) {
 }
 if (-not (Test-Path $caCrt) -or -not (Test-Path $caKey)) {
     openssl genrsa -out $caKey 2048
-    openssl req -new -x509 -days $Days -key $caKey -out $caCrt -subj "/CN=$CaCn"
+    $caSubj = "/CN=$CaCn"
+    openssl req -new -x509 -days $Days -key $caKey -out $caCrt -subj $caSubj
 }
 
 Write-Host "[certs] certyfikat serwera (CN=$ServerCn)..."
@@ -58,7 +59,8 @@ $($sanLines -join "`n")
 "@ | Set-Content -Encoding ascii $extFile
 
 openssl genrsa -out $serverKey 2048
-openssl req -new -key $serverKey -out $serverCsr -subj "/CN=$ServerCn"
+$serverSubj = "/CN=$ServerCn"
+openssl req -new -key $serverKey -out $serverCsr -subj $serverSubj
 openssl x509 -req -in $serverCsr -CA $caCrt -CAkey $caKey -CAcreateserial `
     -out $serverCrt -days $Days -extfile $extFile -extensions v3_req
 

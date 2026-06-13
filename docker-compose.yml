@@ -1,14 +1,16 @@
 services:
   mosquitto:
-    image: eclipse-mosquitto:2
+    build: ./mosquitto
     container_name: iot-mosquitto
     restart: unless-stopped
     ports:
       - "1883:1883"   # tylko localhost w kontenerze (mapowanie dla dev)
       - "8883:8883"   # MQTT over TLS (ESP32 ↔ RPi)
     volumes:
-      - ./mosquitto/config:/mosquitto/config:ro
-      - ./mosquitto/certs:/mosquitto/certs:ro
+      # Mount at -src paths; entrypoint copies into /mosquitto/config and /mosquitto/certs
+      # with correct ownership (required on Windows/macOS bind mounts).
+      - ./mosquitto/config:/mosquitto/config-src:ro
+      - ./mosquitto/certs:/mosquitto/certs-src:ro
       - mosquitto-data:/mosquitto/data
       - mosquitto-log:/mosquitto/log
 
