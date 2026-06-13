@@ -84,15 +84,7 @@ Na produkcji ustaw CN/SAN na hostname lub IP Raspberry Pi (wymagane przy łącze
 
 ### 2. Uruchom brokera
 
-Wymagane pliki przed startem: `mosquitto/certs/ca.crt`, `server.crt`, **`server.key`** (generowane skryptem, nie w git), `mosquitto/config/passwd`.
-
-**Linux / Raspberry Pi (Docker):** kontener czyta `passwd` jako użytkownik UID **1883**. Po sklonowaniu repozytorium lub wygenerowaniu haseł ustaw uprawnienia:
-
-```bash
-sudo chown 1883:1883 mosquitto/config/passwd && chmod 600 mosquitto/config/passwd
-# albo, gdy chown 1883 nie jest możliwy:
-chmod 644 mosquitto/config/passwd
-```
+Wymagane pliki przed startem: `mosquitto/certs/ca.crt`, `server.crt`, **`server.key`** (generowane skryptem, nie w git).
 
 ```bash
 docker compose up -d mosquitto
@@ -177,13 +169,6 @@ mosquitto_sub -h localhost -p 8883 \
 ## Tryb bez TLS (tylko dev)
 
 Wyłącz TLS w `config.yaml` (`mqtt.tls.enabled: false`, `port: 1883`) i uruchom brokera bez `tls.conf`. Nie używaj tego w sieci produkcyjnej.
-
-## Rozwiązywanie problemów Mosquitto (Docker)
-
-| Błąd w logu | Przyczyna | Rozwiązanie |
-|-------------|-----------|-------------|
-| `Unable to open pwfile "/mosquitto/config/passwd"` | Brak pliku lub złe uprawnienia bind-mountu (UID 1883 w kontenerze) | `ls -la mosquitto/config/passwd` — jeśli brak: `./tools/generate_mqtt_certs.sh`. Potem `sudo chown 1883:1883 mosquitto/config/passwd && chmod 600 mosquitto/config/passwd` lub `chmod 644 mosquitto/config/passwd` |
-| `Unknown configuration variable 'include'` | Nieprawidłowa dyrektywa w `mosquitto.conf` | Użyj `include_dir /mosquitto/config/conf.d` (patrz `conf.d/tls.conf`) |
 
 ## Co dalej
 
