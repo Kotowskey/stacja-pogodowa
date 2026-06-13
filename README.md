@@ -24,7 +24,7 @@ iot/
 ├── config.yaml                  konfiguracja bramki (MQTT + TLS, baza, web)
 ├── docker-compose.yml           Mosquitto w kontenerze (dev)
 ├── mosquitto/
-│   ├── config/                  mosquitto.conf, tls.conf, passwd
+│   ├── config/                  mosquitto.conf, conf.d/tls.conf, passwd
 │   └── certs/                   CA + certyfikat serwera (generowane skryptem)
 ├── esp32/weather_node/          firmware ESP32 (Arduino IDE, MQTT TLS)
 ├── raspberry/                   aplikacja Raspberry Pi (FastAPI + MQTT + SQLite)
