@@ -75,6 +75,15 @@ else
   python3 "$REPO_ROOT/tools/mqtt_passwd.py" "$PASSWD_FILE" rpi_gateway "$GATEWAY_PASS"
 fi
 
+# Kontener Mosquitto działa jako UID 1883 — bez tego bind-mount na Linuxie
+# kończy się: Unable to open pwfile "/mosquitto/config/passwd".
+if chown 1883:1883 "$PASSWD_FILE" 2>/dev/null; then
+  chmod 600 "$PASSWD_FILE"
+else
+  chmod 644 "$PASSWD_FILE"
+fi
+
 echo ""
 echo "Gotowe. CA dla ESP32: $CERTS_DIR/ca.crt"
 echo "Użytkownicy: esp32_user, rpi_gateway (hasło: $ESP32_PASS)"
+echo "Docker (Linux): jeśli broker nie startuje, uruchom: chmod 644 $PASSWD_FILE"
