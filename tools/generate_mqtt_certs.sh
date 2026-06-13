@@ -31,11 +31,23 @@ done
 
 mkdir -p "$CERTS_DIR" "$(dirname "$PASSWD_FILE")"
 
+ca_key_matches_cert() {
+  local crt_mod key_mod
+  crt_mod="$(openssl x509 -noout -modulus -in "$1" 2>/dev/null || true)"
+  key_mod="$(openssl rsa -noout -modulus -in "$2" 2>/dev/null || true)"
+  [[ -n "$crt_mod" && "$crt_mod" == "$key_mod" ]]
+}
+
 echo "[certs] CA ($CA_CN)..."
 # ca.crt may be committed without ca.key (gitignored); without the key we cannot sign server.crt.
 if [[ -f "$CERTS_DIR/ca.crt" && ! -f "$CERTS_DIR/ca.key" ]]; then
   echo "[certs] brak ca.key — usuwam stary ca.crt i generuję CA od nowa..."
   rm -f "$CERTS_DIR/ca.crt" "$CERTS_DIR/ca.srl"
+elif [[ -f "$CERTS_DIR/ca.crt" && -f "$CERTS_DIR/ca.key" ]] \
+    && ! ca_key_matches_cert "$CERTS_DIR/ca.crt" "$CERTS_DIR/ca.key"; then
+  echo "[certs] ca.crt i ca.key nie pasują — generuję CA od nowa..."
+  rm -f "$CERTS_DIR/ca.crt" "$CERTS_DIR/ca.key" "$CERTS_DIR/ca.srl" \
+    "$CERTS_DIR/server.crt" "$CERTS_DIR/server.key"
 fi
 if [[ ! -f "$CERTS_DIR/ca.crt" || ! -f "$CERTS_DIR/ca.key" ]]; then
   openssl genrsa -out "$CERTS_DIR/ca.key" 2048
