@@ -11,7 +11,6 @@
 **Wykonawcy:** Łukasz Kotowski, Jakub Kiryłowicz, Dawid Szczawiński, Jakub Werykowski
 
 **Przedmiot:** Internet rzeczy (IoT)  
-**Uczelnia:** Politechnika Białostocka
 
 </div>
 
