@@ -266,12 +266,11 @@ W ramach projektu udało nam się zrealizować kompletny łańcuch IoT: od węz�
 - mTLS (certyfikat klienta na ESP32) dla wyższego poziomu bezpieczeństwa,
 - alerty przy przekroczeniu progów (np. pin ALERT na TMP102).
 
-> **Uwaga (tryb dev):** wyłączenie TLS w `config.yaml` (`mqtt.tls.enabled: false`, `port: 1883`) i uruchomienie brokera bez `tls.conf` jest możliwe wyłącznie lokalnie. Nie stosujemy tego w sieci produkcyjnej.
+> **Uwaga (tryb dev):** wyłączenie TLS w `config.yaml` (`mqtt.tls.enabled: false`, `port: 1883`) i uruchomienie brokera bez `tls.conf` jest możliwe wyłącznie lokalnie.
 
 ---
 
 <div align="center">
 
-*Sprawozdanie przygotowane w ramach projektu IoT — Politechnika Białostocka*
 
 </div>
