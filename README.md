@@ -1,16 +1,16 @@
-<div align="center">
+<div class="strona-tytulowa" align="center">
 
 <img src="docs/assets/logo-pb.png" alt="Politechnika Białostocka" width="420" />
 
-# Sprawozdanie z projektu
+<h1>Sprawozdanie z projektu</h1>
 
-**Stacja pogodowa IoT — bramka Raspberry Pi**
+<p><strong>Stacja pogodowa IoT — bramka Raspberry Pi</strong></p>
 
----
+<hr />
 
-**Wykonawcy:** Łukasz Kotowski, Jakub Kiryłowicz, Dawid Szczawiński, Jakub Werykowski
+<p><strong>Wykonawcy:</strong> Łukasz Kotowski, Jakub Kiryłowicz, Dawid Szczawiński, Jakub Werykowski</p>
 
-**Przedmiot:** Internet rzeczy (IoT)  
+<p><strong>Przedmiot:</strong> Internet rzeczy (IoT)</p>
 
 </div>
 
