@@ -1,11 +1,3 @@
-"""Punkt wejścia: uruchamia serwer Uvicorn z aplikacją FastAPI.
-
-Uruchomienie:
-    python -m raspberry.main
-    # albo:
-    uvicorn raspberry.main:app --host 0.0.0.0 --port 8000
-"""
-
 from __future__ import annotations
 
 import logging

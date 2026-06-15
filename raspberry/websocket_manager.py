@@ -1,5 +1,3 @@
-"""Prosty manager połączeń WebSocket - rozsyła wiadomości do wszystkich klientów."""
-
 from __future__ import annotations
 
 import asyncio

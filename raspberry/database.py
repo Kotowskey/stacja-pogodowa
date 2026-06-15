@@ -1,10 +1,3 @@
-"""Asynchroniczna warstwa dostępu do bazy SQLite.
-
-Przechowywane są wszystkie odebrane pomiary - umożliwia to wyświetlanie historii
-oraz wykresów w UI. SQLite jest wystarczające dla typowej stacji pogodowej
-(setki/tysiące pomiarów dziennie).
-"""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone

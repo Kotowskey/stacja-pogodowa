@@ -1,10 +1,3 @@
-"""Ładowanie konfiguracji z pliku YAML.
-
-Konfiguracja jest podzielona na sekcje (MQTT, baza, web, węzły).
-Plik domyślnie znajduje się w `config.yaml` w katalogu głównym repo,
-można nadpisać zmienną środowiskową IOT_CONFIG.
-"""
-
 from __future__ import annotations
 
 import os

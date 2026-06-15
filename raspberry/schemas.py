@@ -1,5 +1,3 @@
-"""Modele Pydantic - format danych przesyłanych przez MQTT i API."""
-
 from __future__ import annotations
 
 from datetime import datetime, timezone

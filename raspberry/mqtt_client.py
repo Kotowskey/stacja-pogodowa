@@ -1,11 +1,3 @@
-"""Klient MQTT - subskrybuje pomiary z węzłów, zapisuje do bazy
-i rozsyła na żywo przez WebSocket.
-
-Używamy paho-mqtt w trybie pętli wątkowej (`loop_start`), a wszystkie operacje
-asynchroniczne (zapis do bazy, broadcast) wywołujemy w głównym event-loopie
-poprzez `asyncio.run_coroutine_threadsafe`.
-"""
-
 from __future__ import annotations
 
 import asyncio
