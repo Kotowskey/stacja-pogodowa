@@ -15,7 +15,6 @@ class MqttTlsConfig(BaseModel):
     ca_file: str = "mosquitto/certs/ca.crt"
     certfile: str = ""
     keyfile: str = ""
-    # Tylko dev: wyłącza weryfikację certyfikatu (NIE używać w produkcji)
     insecure: bool = False
 
 
@@ -55,7 +54,6 @@ class AppConfig(BaseModel):
 
 
 def _default_config_path() -> Path:
-    # repo root = parent katalogu `raspberry/`
     return Path(__file__).resolve().parent.parent / "config.yaml"
 
 

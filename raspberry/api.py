@@ -58,7 +58,6 @@ def create_app(config: Optional[AppConfig] = None) -> FastAPI:
     )
     templates = Jinja2Templates(directory=str(_HERE / "templates"))
 
-    # ------------------------------------------------------------------ UI
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request):
         return templates.TemplateResponse(
@@ -70,7 +69,6 @@ def create_app(config: Optional[AppConfig] = None) -> FastAPI:
             },
         )
 
-    # ----------------------------------------------------------------- REST
     @app.get("/api/health")
     async def health():
         return {
@@ -120,12 +118,10 @@ def create_app(config: Optional[AppConfig] = None) -> FastAPI:
             limit=limit or cfg.database.history_limit,
         )
 
-    # ----------------------------------------------------------- WebSocket
     @app.websocket("/ws")
     async def ws_endpoint(ws: WebSocket):
         await ws_manager.connect(ws)
         try:
-            # Klient nic do nas nie pisze - po prostu utrzymujemy połączenie
             while True:
                 await ws.receive_text()
         except WebSocketDisconnect:

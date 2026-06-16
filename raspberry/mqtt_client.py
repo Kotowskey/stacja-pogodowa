@@ -36,7 +36,6 @@ class MqttGateway:
         self._client: Optional[mqtt.Client] = None
         self._connected = asyncio.Event()
 
-    # ------------------------------------------------------------------ public
     def start(self) -> None:
         client = mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2,
@@ -106,7 +105,6 @@ class MqttGateway:
             client.tls_insecure_set(True)
             log.warning("MQTT TLS: tryb insecure (bez weryfikacji certyfikatu)")
 
-    # --------------------------------------------------------------- callbacks
     def _on_connect(self, client: mqtt.Client, userdata, flags, reason_code, properties):
         if reason_code == 0:
             log.info("MQTT: połączono - subskrybuję %s", self._cfg.topic_subscribe)
@@ -120,7 +118,6 @@ class MqttGateway:
         self._loop.call_soon_threadsafe(self._connected.clear)
 
     def _on_message(self, client: mqtt.Client, userdata, msg: mqtt.MQTTMessage):
-        # Topic: weather/<node_id>/data - wyciągamy node_id ze ścieżki
         parts = msg.topic.split("/")
         topic_node_id = parts[1] if len(parts) >= 2 else None
 
@@ -141,12 +138,10 @@ class MqttGateway:
             log.warning("Brak node_id w payloadzie ani w topicu %s", msg.topic)
             return
 
-        # Cała logika async musi przejść do głównego loopa
         asyncio.run_coroutine_threadsafe(
             self._handle_measurement(node_id, measurement), self._loop
         )
 
-    # --------------------------------------------------------------- async pipeline
     async def _handle_measurement(self, node_id: str, m: MeasurementIn) -> None:
         try:
             saved = await self._db.insert_measurement(node_id, m)

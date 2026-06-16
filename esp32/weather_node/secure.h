@@ -3,8 +3,6 @@
 #define MQTT_USER     "esp32_user"
 #define MQTT_PASSWORD "iot-dev-pass"
 
-// ── Certyfikat CA (skopiuj z: cat ~/mqtt-certs/ca.crt) ───
-// Każda linia musi kończyć się \n w środku stringa
 const char CA_CERT[] PROGMEM = R"EOF(
 -----BEGIN CERTIFICATE-----
 MIIDBTCCAe2gAwIBAgIUeKKLlEB4Tk9OHBGHobdWZx2fUdswDQYJKoZIhvcNAQEL

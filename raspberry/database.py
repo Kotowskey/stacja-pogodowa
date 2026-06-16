@@ -65,7 +65,6 @@ class Database:
     ) -> MeasurementOut:
         conn = self._require_conn()
         ts = m.timestamp or datetime.now(tz=timezone.utc)
-        # SQLite nie ma typu DATETIME - trzymamy ISO-8601
         ts_str = ts.astimezone(timezone.utc).isoformat()
 
         cur = await conn.execute(

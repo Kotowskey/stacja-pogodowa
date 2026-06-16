@@ -34,7 +34,7 @@ class NodeProfile:
     base_temp: float
     base_distance: float
     base_lux: float
-    phase: float  # przesunięcie sinusoidy temperatury
+    phase: float
 
 
 def make_default_nodes(ids: List[str]) -> List[NodeProfile]:

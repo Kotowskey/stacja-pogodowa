@@ -1,16 +1,15 @@
 (() => {
     "use strict";
 
-    const STALE_AFTER_MS = 60_000; // 1 min bez pomiaru => węzeł "offline"
+    const STALE_AFTER_MS = 60_000;
 
     const state = {
-        nodes: new Map(),        // node_id -> { id, name, lastMeasurement, lastSeen }
+        nodes: new Map(),
         selectedNode: null,
         rangeLimit: 100,
         charts: { temp: null, dist: null, lux: null },
     };
 
-    // -------------------------------------------------------------------- helpers
     const $ = (sel) => document.querySelector(sel);
     const fmt = (val, digits = 1) =>
         (val === null || val === undefined || Number.isNaN(val)) ? "—" : Number(val).toFixed(digits);
@@ -32,7 +31,6 @@
         return state.nodes.get(id);
     }
 
-    // ---------------------------------------------------------------------- UI: cards
     function renderCards() {
         const wrap = $("#cards");
         wrap.innerHTML = "";
@@ -86,7 +84,6 @@
         })[c]);
     }
 
-    // ---------------------------------------------------------- UI: node selector
     function renderNodeOptions() {
         const sel = $("#node-select");
         const previous = sel.value;
@@ -114,7 +111,6 @@
         sel.value = state.selectedNode;
     }
 
-    // -------------------------------------------------------------------- charts
     function makeChart(canvasId, label, color) {
         const ctx = document.getElementById(canvasId).getContext("2d");
         return new Chart(ctx, {
@@ -183,7 +179,6 @@
         push(state.charts.lux,  m.lux);
     }
 
-    // ---------------------------------------------------------------------- API
     async function fetchJson(url) {
         const r = await fetch(url);
         if (!r.ok) throw new Error(`${url} -> HTTP ${r.status}`);
@@ -197,7 +192,6 @@
             if (n.last_measurement) node.lastMeasurement = n.last_measurement;
             if (n.last_seen) node.lastSeen = n.last_seen;
         }
-        // dorzuć węzły z konfiguracji (jeśli API ich nie zwróciło)
         for (const n of (window.__INITIAL_NODES__ || [])) ensureNode(n.id, n.name);
 
         renderCards();
@@ -211,7 +205,6 @@
         setHistory(data);
     }
 
-    // ---------------------------------------------------------------- WebSocket
     function connectWs() {
         const proto = location.protocol === "https:" ? "wss:" : "ws:";
         const ws = new WebSocket(`${proto}//${location.host}/ws`);
@@ -233,7 +226,7 @@
             try {
                 const msg = JSON.parse(ev.data);
                 if (msg.type === "measurement") onMeasurement(msg.data);
-            } catch (_) { /* ignore */ }
+            } catch (_) {}
         });
     }
 
@@ -246,7 +239,6 @@
         appendLive(m);
     }
 
-    // ---------------------------------------------------------------------- init
     function bindControls() {
         $("#node-select").addEventListener("change", (e) => {
             state.selectedNode = e.target.value;
@@ -256,7 +248,7 @@
             state.rangeLimit = parseInt(e.target.value, 10) || 100;
             loadHistory().catch(console.error);
         });
-        setInterval(renderCards, 5_000); // odświeżanie statusu online/offline
+        setInterval(renderCards, 5_000);
     }
 
     async function init() {
