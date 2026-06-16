@@ -39,7 +39,7 @@ class DatabaseConfig(BaseModel):
 class WebConfig(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
-    title: str = "Stacja Pogodowa - IoT"
+    title: str = "Zaawansowany System Monitorowania Wnętrza Czołgu - IoT"
 
 
 class NodeConfig(BaseModel):

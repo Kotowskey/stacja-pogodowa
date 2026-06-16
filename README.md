@@ -1,10 +1,12 @@
-<div align="center">
 
-<img src="docs/assets/logo-pb.png" alt="Politechnika Białostocka" width="420" />
+
+<div align="center">
 
 # Sprawozdanie z projektu
 
-**Stacja pogodowa IoT — bramka Raspberry Pi**
+![pb](https://pb.edu.pl/siw/wp-content/uploads/sites/101/2023/06/Logo-PB-poziome-kolor-czarny-zoom.webp)
+
+**Zaawansowany system monitorowania wnętrza czołgu — bramka Raspberry Pi**
 
 ---
 
@@ -12,13 +14,13 @@
 
 **Przedmiot:** Internet rzeczy (IoT)  
 
-</div>
-
 ---
+
+</div>
 
 ## 1. Wprowadzenie
 
-W ramach projektu z przedmiotu **Internet rzeczy (IoT)** zaprojektowaliśmy i zaimplementowaliśmy system monitorowania warunków otoczenia oparty na architekturze węzły–bramka. System składa się z co najmniej trzech węzłów pomiarowych (mikrokontrolery ESP32), bramki agregującej dane (Raspberry Pi 3) oraz warstwy wizualizacji dostępnej w sieci lokalnej.
+W ramach projektu z przedmiotu **Internet rzeczy (IoT)** zaprojektowaliśmy i zaimplementowaliśmy zaawansowany system monitorowania wnętrza czołgu oparty na architekturze węzły–bramka. System składa się z co najmniej trzech węzłów pomiarowych (mikrokontrolery ESP32), bramki agregującej dane (Raspberry Pi 3) oraz warstwy wizualizacji dostępnej w sieci lokalnej.
 
 Celem projektu było spełnienie wymagań laboratoryjnych dotyczących:
 
@@ -38,7 +40,7 @@ Zbudowany przez nas system realizuje następujące funkcje:
 | Bramka | Subskrypcja pomiarów, zapis do bazy, API HTTP/WS | Raspberry Pi 3, Python, FastAPI |
 | Wizualizacja | Dashboard z kartami węzłów i wykresami historii | HTML, CSS, JavaScript, Chart.js |
 
-Węzły ESP32 mierzą m.in. **temperaturę** (czujnik TMP102 / planowany BME680), a w rozszerzonej wersji systemu przewidziano dodatkowo pomiar **odległości** (HC-SR04) oraz **natężenia światła** (LDR). Do testów i demonstracji bez sprzętu przygotowaliśmy **symulator trzech węzłów**, który publikuje dane w identycznym formacie JSON co firmware ESP32.
+Węzły ESP32 mierzą m.in. **temperaturę** (czujnik TMP102 / planowany BME680), a w rozszerzonej wersji systemu przewidziano dodatkowo pomiar **odległości** (HC-SR04) oraz **natężenia światła** (LDR). Dane są interpretowane jako parametry środowiskowe kluczowe dla bezpieczeństwa i świadomości sytuacyjnej załogi wewnątrz czołgu. Do testów i demonstracji bez sprzętu przygotowaliśmy **symulator trzech węzłów**, który publikuje dane w identycznym formacie JSON co firmware ESP32.
 
 ```
 ┌──────────┐  MQTT/TLS  ┌──────────────┐   HTTP/WS   ┌────────────┐
@@ -49,6 +51,9 @@ Węzły ESP32 mierzą m.in. **temperaturę** (czujnik TMP102 / planowany BME680)
                                                           ▼
                                                       SQLite DB
 ```
+<div align="center">
+![https://ibb.co/V0Yd3h68](https://ibb.co/V0Yd3h68)
+</div>
 
 ## 3. Architektura i struktura repozytorium
 
@@ -80,7 +85,7 @@ Na każdym węźle zaimplementowaliśmy:
 - bezpieczne połączenie MQTT over TLS z weryfikacją certyfikatu CA,
 - cykliczną publikację pomiarów co 2 sekundy na topic `weather/<node_id>/data`.
 
-Identyfikatory węzłów skonfigurowaliśmy zgodnie z plikiem `config.yaml`: `esp32-01` (Salon), `esp32-02` (Sypialnia), `esp32-03` (Balkon).
+Identyfikatory węzłów skonfigurowaliśmy zgodnie z plikiem `config.yaml`: `esp32-01` (Przedział kierowcy), `esp32-02` (Przedział bojowy), `esp32-03` (Przedział napędowy).
 
 ### 3.2. Bramka Raspberry Pi
 
@@ -249,7 +254,7 @@ Zaimplementowaliśmy następujące endpointy:
 
 ## 8. Wyniki i wnioski
 
-W ramach projektu udało nam się zrealizować kompletny łańcuch IoT: od węzłów pomiarowych, przez zabezpieczony broker MQTT, po bramkę z bazą danych i interfejsem użytkownika. System spełnia wymagania dotyczące liczby węzłów, szyfrowanej komunikacji oraz wizualizacji danych w sieci lokalnej.
+W ramach projektu udało nam się zrealizować kompletny łańcuch IoT: od węzłów pomiarowych, przez zabezpieczony broker MQTT, po bramkę z bazą danych i interfejsem użytkownika. System spełnia wymagania dotyczące liczby węzłów, szyfrowanej komunikacji oraz wizualizacji danych dla zaawansowanego monitorowania wnętrza czołgu w sieci lokalnej.
 
 **Osiągnięte cele:**
 

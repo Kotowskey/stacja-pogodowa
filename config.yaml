@@ -1,4 +1,4 @@
-# Konfiguracja bramki Raspberry Pi - stacja pogodowa
+# Konfiguracja bramki Raspberry Pi - monitorowanie wnętrza czołgu
 # Plik wczytywany przez raspberry/config.py
 
 mqtt:
@@ -23,12 +23,12 @@ database:
 web:
   host: "0.0.0.0"
   port: 8000
-  title: "Stacja Pogodowa - IoT"
+  title: "Zaawansowany System Monitorowania Wnętrza Czołgu - IoT"
 
 nodes:
   - id: "esp32-01"
-    name: "Salon"
+    name: "Przedział kierowcy"
   - id: "esp32-02"
-    name: "Sypialnia"
+    name: "Przedział bojowy"
   - id: "esp32-03"
-    name: "Balkon"
+    name: "Przedział napędowy"

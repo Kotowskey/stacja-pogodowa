@@ -75,7 +75,7 @@ def sample(profile: NodeProfile, t: float) -> dict:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Symulator węzłów ESP32 dla stacji pogodowej.")
+    p = argparse.ArgumentParser(description="Symulator węzłów ESP32 dla monitorowania wnętrza czołgu.")
     p.add_argument("--host", default="localhost", help="Adres brokera MQTT (domyślnie localhost)")
     p.add_argument("--port", type=int, default=8883, help="Port brokera MQTT (8883=TLS, 1883=plain)")
     p.add_argument("--tls", action="store_true", help="Połączenie MQTT over TLS (port 8883)")
