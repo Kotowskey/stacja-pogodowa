@@ -4,7 +4,6 @@
 
 # Sprawozdanie z projektu
 
-![pb](https://pb.edu.pl/siw/wp-content/uploads/sites/101/2023/06/Logo-PB-poziome-kolor-czarny-zoom.webp)
 
 **Zaawansowany system monitorowania wnętrza czołgu — bramka Raspberry Pi**
 
@@ -52,7 +51,6 @@ Węzły ESP32 mierzą m.in. **temperaturę** (czujnik TMP102 / planowany BME680)
                                                       SQLite DB
 ```
 <div align="center">
-![https://ibb.co/V0Yd3h68](https://ibb.co/V0Yd3h68)
 </div>
 
 ## 3. Architektura i struktura repozytorium
